@@ -1,3 +1,5 @@
+Prompt ფაილების დანიშნულება: https://docs.github.com/en/copilot/reference/customization-cheat-sheet
+
 # GitHub Copilot Configuration Structure
 
 ```text
