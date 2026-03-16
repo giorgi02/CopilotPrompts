@@ -1,3 +1,6 @@
+# GitHub Copilot Configuration Structure
+
+```text
 .github
 │
 ├─ copilot-instructions.md
