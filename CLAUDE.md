@@ -55,11 +55,11 @@ When the user asks for guidance on the target stack (handlers, endpoints, EF map
 - **Internal links must resolve.** Adding or renaming a file means updating every reference to it across `README.md`, `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, and any sibling instructions/prompts/skills/agents that link to it.
 - **The 4,000-char budget on [.github/copilot-instructions.md](.github/copilot-instructions.md)** is real (Copilot Code Review truncation). Push detail down into `.github/instructions/*.instructions.md` rather than expanding the constitution.
 - **Don't duplicate.** A rule belongs in exactly one place; everywhere else cross-links to it. The anti-patterns file ([.github/instructions/anti-patterns.instructions.md](.github/instructions/anti-patterns.instructions.md)) is the canonical home for "don't do X".
-- **Agent files use `*.agent.md`** (the `.agent.md` suffix is the current convention — see [.github/agents/csharp-dev.agent.md](.github/agents/csharp-dev.agent.md)).
+- **Agent files use `*.agent.md`** (the `.agent.md` suffix is the current convention — see [.github/agents/csharp-developer.agent.md](.github/agents/csharp-developer.agent.md)).
 
 ## Useful slash-prompts (run these instead of reinventing)
 
 The prompts in [.github/prompts/](.github/prompts/) are how target-codebase work gets done:
 `/api-generation`, `/review-architecture`, `/bug-investigation`, `/review-code`, `/review-performance`, `/refactor`, `/review-security`, `/testing`.
 
-Specialist personas live in [.github/agents/](.github/agents/) and are selected per chat session — currently only [`csharp-dev`](.github/agents/csharp-dev.agent.md).
+Specialist personas live in [.github/agents/](.github/agents/) and are selected per chat session — currently only [`csharp-developer`](.github/agents/csharp-developer.agent.md).

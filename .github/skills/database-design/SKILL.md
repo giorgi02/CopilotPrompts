@@ -5,7 +5,7 @@ description: Design PostgreSQL schemas for this codebase — tables, columns, in
 
 # Database design
 
-Activates when working on the persistence layer or making schema decisions. See [.github/instructions/database.instructions.md](../../instructions/database.instructions.md) and [.github/instructions/migrations.instructions.md](../../instructions/migrations.instructions.md).
+Activates when working on the persistence layer or making schema decisions.
 
 ## Engine and conventions
 

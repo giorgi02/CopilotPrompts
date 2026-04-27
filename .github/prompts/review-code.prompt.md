@@ -24,7 +24,7 @@ Identify what you are reviewing:
    - Did Web bypass Application and call EF directly?
    - Did a handler call another handler via `IMediator`?
 2. **Correctness** — does the code do what its name says? Edge cases? Off-by-one? Cancellation? Concurrency?
-3. **Security** — [security instructions](../instructions/security.instructions.md). Injection, authn/z, secrets, log hygiene.
+3. **Security** — [secure-coding skill](../skills/secure-coding/SKILL.md). Injection, authn/z, secrets, log hygiene.
 4. **Data and persistence** — N+1, missing `AsNoTracking`, missing index, mistaken `Include`, raw SQL with interpolation, migration safety.
 5. **Performance** — sync-over-async, allocations on hot paths, missing `LoggerMessage`, sequential awaits that could be parallel.
 6. **API contract** — status codes, `ProblemDetails`, OpenAPI metadata, idempotency, versioning.
@@ -65,6 +65,6 @@ Identify what you are reviewing:
 ## Hard rules
 
 - Quote file paths with line numbers (`src/Application/Features/Orders/PlaceOrder/PlaceOrderHandler.cs:42`).
-- Cite the specific rule violated by reference (e.g. "violates [.github/instructions/cqrs.instructions.md](../instructions/cqrs.instructions.md) — handlers must not call SaveChanges").
+- Cite the specific rule violated by reference (e.g. "violates [.github/skills/cqrs-implementation/SKILL.md](../skills/cqrs-implementation/SKILL.md) — handlers must not call SaveChanges").
 - No "looks good" without evidence. If you have nothing to flag, say so explicitly and list what you checked.
 - No restating what the code does. Only flag what is wrong, missing, or risky.

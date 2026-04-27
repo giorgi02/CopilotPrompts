@@ -57,7 +57,7 @@ Each choice is justified in the relevant file under [.github/instructions/](.git
 
 ### When you want a specialist
 Switch the chat to one of the custom agents in [.github/agents/](.github/agents/):
-- [`csharp-dev`](.github/agents/csharp-dev.agent.md) — implements C# / .NET code across all four layers under the project conventions.
+- [`csharp-developer`](.github/agents/csharp-developer.agent.md) — implements C# / .NET code across all four layers under the project conventions.
 
 Additional personas (architect, reviewer, security, performance, etc.) are planned — for now, use the relevant prompt above (e.g. `/review-architecture`, `/review-security`, `/review-performance`) which encodes the same expectations.
 

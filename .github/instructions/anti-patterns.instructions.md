@@ -8,7 +8,7 @@ applyTo: '**/*.cs,**/*.csproj,**/Directory.Packages.props,**/Directory.Build.pro
 
 A named smell is faster to review than a paragraph of explanation. Use these names in PR comments. Each entry has a one-line description and the canonical fix.
 
-This file complements — and does not replace — the layer-specific rules in [domain.instructions.md](./domain.instructions.md), [application.instructions.md](./application.instructions.md), [infrastructure.instructions.md](./infrastructure.instructions.md), [web.instructions.md](./web.instructions.md), [security.instructions.md](./security.instructions.md), and [performance.instructions.md](./performance.instructions.md).
+This file complements — and does not replace — the layer-specific rules in [domain.instructions.md](./domain.instructions.md), [application.instructions.md](./application.instructions.md), [presentation.instructions.md](./presentation.instructions.md), and the [secure-coding skill](../skills/secure-coding/SKILL.md).
 
 ---
 

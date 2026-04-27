@@ -43,7 +43,7 @@ Plus, **only if needed**:
 
 ## Conventions to apply
 
-- Follow [.github/instructions/cqrs.instructions.md](../instructions/cqrs.instructions.md), [.github/instructions/api.instructions.md](../instructions/api.instructions.md), and [.github/instructions/web.instructions.md](../instructions/web.instructions.md).
+- Follow [.github/skills/cqrs-implementation/SKILL.md](../skills/cqrs-implementation/SKILL.md), [.github/instructions/api.instructions.md](../instructions/api.instructions.md), and [.github/instructions/presentation.instructions.md](../instructions/presentation.instructions.md).
 - Endpoint stays **handler-thin** (≤ 15 lines).
 - Handler is `internal sealed`, returns `Result<T>`.
 - Validator covers shape, not business rules.

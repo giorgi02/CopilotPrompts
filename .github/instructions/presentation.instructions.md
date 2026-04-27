@@ -1,112 +1,202 @@
 ---
-name: 'Database & EF Core conventions'
-description: 'PostgreSQL-first schema design, EF Core configurations, query rules, and migration discipline.'
-applyTo: 'src/Infrastructure/Persistence/**/*.cs,src/Infrastructure/**/Migrations/**/*.cs'
+name: 'Presentation (Web) layer rules'
+description: 'Web project structure, Minimal API endpoint modules, middleware pipeline, Result-to-ProblemDetails mapping, and composition-root discipline.'
+applyTo: 'src/Web/**/*.cs'
 ---
 
-# Database & EF Core conventions
+# Presentation (Web) layer rules
 
-## Engine
+The Web project is the **composition root** and HTTP boundary. It translates HTTP into MediatR requests, maps `Result` outcomes to status codes, and wires every cross-cutting concern. It contains **no business logic** and **no persistence code**.
 
-- **PostgreSQL 16+** primary. Schema and queries must work on Postgres without provider-specific hacks.
-- SQL Server compatibility is a **best-effort** secondary target. If a feature requires Postgres-only (e.g. `jsonb` operators, `gen_random_uuid()`), call it out in the PR description and isolate via provider-conditional configuration.
+For HTTP contract conventions (URLs, status codes, pagination, ProblemDetails shape) see [api.instructions.md](./api.instructions.md). This file governs **how the Web project is organized**.
 
-## Naming
+## Hard constraints
 
-- Tables: **snake_case**, plural (`orders`, `order_items`).
-- Columns: **snake_case** (`created_at`, `customer_id`).
-- Indexes: `ix_<table>_<columns>`.
-- Foreign keys: `fk_<table>_<referenced_table>_<column>`.
-- Unique constraints: `ux_<table>_<columns>`.
-- Apply globally via a `NpgsqlDbContextOptionsBuilderExtensions.UseSnakeCaseNamingConvention()` (`EFCore.NamingConventions`).
+- Web depends on **Application**. It depends on **Infrastructure only inside `Program.cs`** for DI wiring — never from an endpoint, filter, or service.
+- No `DbContext`, `IApplicationDbContext`, repository, or `Npgsql` type ever appears in `src/Web` outside `Program.cs`.
+- No business rules. Endpoints **dispatch** to MediatR and **shape** the HTTP response. That is the entire job.
+- No custom controller bases. **Minimal APIs** only.
+- No `IHttpContextAccessor` reaching into `HttpContext` for business state — wrap accessors behind `ICurrentUser` (Application abstraction, Infrastructure-implemented).
 
-## Schema
+## Project layout
 
-- Default schema: `public`. Bounded contexts get their own schema (`orders`, `billing`) when the codebase splits.
-- Strongly-typed IDs map to `uuid` columns via a `ValueConverter`.
-- Money: two columns, `<name>_amount numeric(19,4)` + `<name>_currency char(3)`. Owned via `OwnsOne`.
-- Enums: stored as `text` with a `CHECK` constraint, mapped via `HasConversion<string>()`. Avoid Postgres native enums (migration pain).
-- Timestamps: `timestamptz`, never `timestamp without time zone`.
-- Soft delete: opt-in per aggregate via an `IsDeleted` shadow property + global query filter.
-- Row version for optimistic concurrency: `xmin` (Postgres) mapped as `[Timestamp]`-equivalent uint.
+```
+src/Web/
+  Endpoints/
+    Orders/
+      PlaceOrderEndpoint.cs        ← IEndpoint, one file per route
+      CancelOrderEndpoint.cs
+      GetOrderByIdEndpoint.cs
+  Middleware/
+    RequestLoggingMiddleware.cs
+    CorrelationIdMiddleware.cs
+  Filters/
+    IdempotencyEndpointFilter.cs
+    ValidationEndpointFilter.cs    ← only if not handled by MediatR ValidationBehavior
+  ExceptionHandlers/
+    GlobalExceptionHandler.cs      ← IExceptionHandler producing ProblemDetails
+  Infrastructure/                  ← Web-only infra: ResultExtensions, OpenApi config
+    ResultExtensions.cs
+    OpenApiTransformers.cs
+  Extensions/
+    DependencyInjection.cs         ← AddWebServices()
+    ApplicationBuilderExtensions.cs
+  Program.cs
+```
 
-## Configuration
+One endpoint per file. Group by feature folder, not by HTTP verb.
 
-- One `IEntityTypeConfiguration<T>` per aggregate root in `Persistence/Configurations/`.
-- Apply via `modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly)`.
-- Never decorate Domain types with EF attributes.
+## Endpoint module pattern
+
+Every endpoint implements `IEndpoint` and is auto-discovered:
 
 ```csharp
-internal sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
+internal sealed class PlaceOrderEndpoint : IEndpoint
 {
-    public void Configure(EntityTypeBuilder<Order> b)
+    public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        b.ToTable("orders");
-        b.HasKey(o => o.Id);
-        b.Property(o => o.Id).HasConversion(id => id.Value, v => new OrderId(v));
-        b.OwnsOne(o => o.Total, m =>
-        {
-            m.Property(p => p.Amount).HasColumnName("total_amount").HasPrecision(19, 4);
-            m.Property(p => p.Currency).HasColumnName("total_currency").HasMaxLength(3);
-        });
-        b.HasMany(o => o.Items).WithOne().HasForeignKey("order_id").OnDelete(DeleteBehavior.Cascade);
-        b.HasIndex(o => o.CustomerId);
-        b.Property<uint>("xmin").IsRowVersion();
+        app.MapPost("/api/v1/orders", Handle)
+            .WithName(nameof(PlaceOrderEndpoint))
+            .WithTags("Orders")
+            .Produces<OrderDto>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireAuthorization()
+            .AddEndpointFilter<IdempotencyEndpointFilter>();
+    }
+
+    private static async Task<IResult> Handle(
+        PlaceOrderRequest request,
+        ISender sender,
+        CancellationToken ct)
+    {
+        var command = request.ToCommand();
+        var result = await sender.Send(command, ct);
+        return result.Match(
+            order => Results.Created($"/api/v1/orders/{order.Id}", order),
+            ResultExtensions.Problem);
     }
 }
 ```
 
-## Querying rules
+- `internal sealed`. Endpoints are wired by reflection, not consumed directly.
+- Static `Handle` method — no instance state on the endpoint type.
+- `CancellationToken` parameter on every async handler. Always passed to `ISender.Send`.
 
-- **Always** `AsNoTracking()` on read queries. Tracking only when you intend to mutate.
-- **Always** project to a DTO with `Select(...)` for read endpoints. Never load entities then map.
-- **Always** parameterize. EF Core does this for you — never use `FromSqlRaw` with string interpolation.
-- Use `Include` sparingly — split queries with `AsSplitQuery()` when including collections.
-- Pagination via `Skip/Take` for offset, `Where(x => x.Id > cursor).Take(n)` for cursor.
-- For hot read paths: `Dapper` against `NpgsqlDataSource`, queries colocated in `Infrastructure/Queries/`.
+## Endpoint discovery
 
-## Migrations discipline
+One discovery extension scans the assembly and maps every `IEndpoint`:
 
-- One migration per logical change. Do not bundle unrelated schema changes.
-- Migration name describes the change: `AddOutboxTable`, `AddOrderShippedAtColumn`.
-- Inspect generated SQL before commit: `dotnet ef migrations script <FromMigration> <ToMigration>`.
-- **Forward-only.** Drops/renames require:
-  1. Add the new column/table.
-  2. Backfill in a separate migration or out-of-band.
-  3. Switch reads/writes.
-  4. Drop the old in a later migration once all instances are upgraded.
-- Never edit a migration after it has been applied to any non-local environment.
+```csharp
+public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder app)
+{
+    var endpoints = typeof(IWebAssemblyMarker).Assembly
+        .GetTypes()
+        .Where(t => t is { IsClass: true, IsAbstract: false } && typeof(IEndpoint).IsAssignableFrom(t));
 
-## Indexing
+    foreach (var type in endpoints)
+        ((IEndpoint)Activator.CreateInstance(type)!).MapEndpoint(app);
 
-- Every foreign key gets an index.
-- Every column used in a `WHERE` or `ORDER BY` of a frequent query gets an index.
-- Composite indexes follow query column order.
-- Partial indexes for filtered queries (`WHERE status = 'pending'`) when selectivity warrants.
-- Review indexes quarterly with `pg_stat_user_indexes`.
+    return app;
+}
+```
 
-## Transactions
+Called once from `Program.cs`: `app.MapEndpoints();`. Do not register endpoints individually in `Program.cs`.
 
-- The `UnitOfWorkBehavior` opens a transaction per command and commits on success.
-- For multi-aggregate operations, the transaction spans all `SaveChangesAsync` calls.
-- Read queries do not start transactions.
+## Request and response contracts
 
-## Outbox
+- **Request DTOs** (the HTTP body shape) live next to the endpoint: `PlaceOrderRequest` in the same file or a sibling.
+- **Response DTOs** are the Application-layer DTOs (`OrderDto`) — the Web layer does not redefine them.
+- Mapping HTTP request → MediatR command happens via a `ToCommand()` method on the request type. Keep it pure.
+- `record` types only. `JsonStringEnumConverter` enforced globally. camelCase property names.
 
-- `outbox_messages` table: `id uuid pk, type text, payload jsonb, occurred_at timestamptz, processed_at timestamptz null, attempts int default 0, error text null`.
-- `IDomainEventDispatcher` collects events from tracked aggregates in `SaveChangesAsync` and writes them to the outbox **in the same transaction**.
-- `OutboxProcessor` `BackgroundService` polls every 1s, batches of 100, exponential backoff on failure, dead-letters after 10 attempts.
+## Result → IResult mapping
 
-## Connection pooling
+A single `ResultExtensions` translates `Result`/`Result<T>` into HTTP. **No `if (result.IsFailure) return BadRequest(...)`** scattered across endpoints.
 
-- Use `NpgsqlDataSource` registered as singleton. Pool size tuned via `Maximum Pool Size` (default 100, lower for resource-constrained envs).
-- Connection strings via `IOptions<DatabaseOptions>` with validation.
+```csharp
+public static IResult Problem(Result result) => result.Error.Type switch
+{
+    ErrorType.Validation   => Results.ValidationProblem(result.Error.ToDictionary()),
+    ErrorType.NotFound     => Results.Problem(statusCode: StatusCodes.Status404NotFound, ...),
+    ErrorType.Conflict     => Results.Problem(statusCode: StatusCodes.Status409Conflict, ...),
+    ErrorType.Unauthorized => Results.Problem(statusCode: StatusCodes.Status401Unauthorized, ...),
+    ErrorType.Forbidden    => Results.Problem(statusCode: StatusCodes.Status403Forbidden, ...),
+    _                      => Results.Problem(statusCode: StatusCodes.Status500InternalServerError)
+};
+```
+
+Always include `traceId` from the active `Activity`, the stable `type` URI per error category, and `extensions.code` for domain error codes (e.g. `"ORDER.ALREADY_SHIPPED"`).
+
+## Middleware pipeline order
+
+In `Program.cs`, fixed order:
+
+1. `UseExceptionHandler()` — registered `IExceptionHandler` produces ProblemDetails. **Never leak exception text.**
+2. `UseHsts()` / `UseHttpsRedirection()` (non-Development).
+3. `UseCors()` — named policy from configuration; no `AllowAnyOrigin`.
+4. `CorrelationIdMiddleware` — reads/sets `X-Correlation-Id`, attaches to `Activity.Current`.
+5. `UseSerilogRequestLogging()` — structured request log; PII redacted via destructuring policies.
+6. `UseRateLimiter()` — fixed/sliding window per route group as configured.
+7. `UseAuthentication()` → `UseAuthorization()`.
+8. `MapEndpoints()`.
+9. `MapHealthChecks("/health/live")`, `MapHealthChecks("/health/ready", { Predicate = r => r.Tags.Contains("ready") })`.
+
+## Authentication and authorization
+
+- **JWT bearer** via `AddAuthentication().AddJwtBearer()`. Authority + audience from `IOptions<JwtOptions>` with validation.
+- Policy-based authorization. Policies defined in `Extensions/AuthorizationPolicies.cs` and registered via `AddAuthorization(options => ...)`.
+- Per-endpoint: `.RequireAuthorization("PolicyName")`. Anonymous endpoints opt in explicitly via `.AllowAnonymous()`.
+- Domain-level rules (e.g. "user owns this order") run as `IAuthorizationRule<TRequest>` in the Application `AuthorizationBehavior` — **not** as ASP.NET policy handlers.
+
+## Composition root — `Program.cs`
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddDomain()
+    .AddApplication()
+    .AddInfrastructure(builder.Configuration)
+    .AddWebServices(builder.Configuration);
+
+var app = builder.Build();
+app.UsePipeline();      // applies the middleware order above
+app.MapEndpoints();
+app.Run();
+```
+
+- One `AddXxx` extension per layer. Web-specific service registration lives in `Extensions/DependencyInjection.cs`.
+- `Program.cs` is the **only** place Web references Infrastructure.
+- Configuration binding via `IOptions<T>` with `ValidateOnStart()` + `ValidateDataAnnotations()`. Fail fast on misconfiguration.
+
+## Idempotency
+
+- `IdempotencyEndpointFilter` reads the `Idempotency-Key` header on `POST` endpoints that mark themselves with `.AddEndpointFilter<IdempotencyEndpointFilter>()`.
+- The filter delegates to `IIdempotencyStore` (Application abstraction). On replay, returns the stored response without invoking the handler.
+- Missing key on a filtered endpoint → 400 with the `idempotency-key-required` problem type.
+
+## OpenAPI
+
+- `AddOpenApi()` (built-in) + `Microsoft.AspNetCore.OpenApi` transformers in `Infrastructure/OpenApiTransformers.cs`.
+- Every endpoint declares `Produces<T>`, every relevant `ProducesProblem(...)`, `WithName`, `WithTags`, `WithSummary`, `WithDescription`.
+- Examples on each request/response.
+- Group operations by feature tag. Group by HTTP method is forbidden.
+
+## Health checks
+
+- `/health/live` — liveness, no dependencies. Returns 200 if the process is up.
+- `/health/ready` — readiness, includes Postgres and Redis pings tagged `"ready"`.
+- Health responses use the JSON writer; never expose connection strings or stack traces.
 
 ## Forbidden
 
-- `EF.Functions.Like("...%" + input + "%")` without input validation — use parameterized `ILike` and length-cap.
-- `ToList()` early in a query chain (forces materialization).
-- N+1 queries — if you see a `foreach` calling `.Include` per item, you are doing it wrong.
-- Lazy loading. **Disabled** at context level.
-- `DbContext` constructed manually. Always via DI.
-- Mixing read and write in one `IQueryable` chain.
+- Business logic, validation rules, or domain decisions inside an endpoint handler. The handler dispatches and shapes — that is all.
+- `DbContext`, `IApplicationDbContext`, repositories, or `NpgsqlDataSource` referenced anywhere in `src/Web` outside `Program.cs`.
+- `[ApiController]` / `ControllerBase` subclasses. Minimal APIs only.
+- Catching `Exception` in an endpoint to convert it to a response — let the global `IExceptionHandler` do it.
+- `HttpContext.Items` for cross-handler state — use `ICurrentUser` / scoped services.
+- `Results.Ok(new { success = false, ... })` or any 200-with-error envelope. Use the correct status code via `ResultExtensions.Problem`.
+- Raw exception text, stack traces, or framework messages in any HTTP response body.
+- Endpoint-specific DI registrations scattered across files — all Web service wiring goes through `AddWebServices`.
+- Synchronous I/O (`.Result`, `.Wait()`, `.GetAwaiter().GetResult()`) anywhere in the request path.

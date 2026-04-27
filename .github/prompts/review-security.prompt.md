@@ -7,7 +7,7 @@ argument-hint: '<file, endpoint, or PR>'
 
 # Security review
 
-Apply [security instructions](../instructions/security.instructions.md). Map every finding to an OWASP Top 10 category where possible.
+Apply the [secure-coding skill](../skills/secure-coding/SKILL.md). Map every finding to an OWASP Top 10 category where possible.
 
 ## Scan checklist
 
@@ -79,5 +79,5 @@ Apply [security instructions](../instructions/security.instructions.md). Map eve
 ## Discipline
 
 - Cite the OWASP category (e.g. `A01:2021 — Broken Access Control`) where applicable.
-- Cite the specific rule from [security.instructions.md](../instructions/security.instructions.md) by section.
+- Cite the specific rule from the [secure-coding skill](../skills/secure-coding/SKILL.md) by section.
 - A finding without a concrete fix is not a finding — it's a gripe. Always include a fix.

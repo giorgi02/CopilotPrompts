@@ -1,11 +1,11 @@
 ---
 name: secure-coding
-description: Write and review code with OWASP Top 10 defenses, authn/z policies, input validation, secrets handling, and crypto best practices. Use when implementing or reviewing authentication, authorization, file uploads, payment flows, or any code handling user input or secrets.
+description: Write and review code with OWASP Top 10 defenses, authn/z policies, input validation, secrets handling, and crypto best practices. Use when implementing or reviewing authentication, authorization, file uploads, payment flows, transport / CORS / header configuration, or any code handling user input or secrets.
 ---
 
 # Secure coding
 
-Activates whenever code touches authentication, authorization, secrets, user input, file I/O, deserialization, or external systems. See [.github/instructions/security.instructions.md](../../instructions/security.instructions.md).
+Activates whenever code touches authentication, authorization, secrets, user input, file I/O, deserialization, transport configuration, or external systems. This is the canonical security reference — security is a constraint on every line, not a feature.
 
 ## OWASP Top 10 mapping
 
@@ -24,77 +24,111 @@ Activates whenever code touches authentication, authorization, secrets, user inp
 
 ## Authentication
 
-- JWT Bearer or OpenID Connect. No homemade auth.
-- Token validation flags all `true`, `ClockSkew = 30s`.
-- Asymmetric signing keys via JWKS or secret store.
-- Refresh tokens rotated on use; revocation list server-side; max 30-day absolute lifetime.
+- **JWT Bearer** or **OpenID Connect**. No homemade auth schemes. No basic auth in production.
+- Token validation: `ValidateIssuer = true`, `ValidateAudience = true`, `ValidateLifetime = true`, `ValidateIssuerSigningKey = true`, `ClockSkew = TimeSpan.FromSeconds(30)`.
+- Signing keys via JWKS endpoint (auto-rotating) or asymmetric keys from a secret store. **Never** symmetric secrets in `appsettings.json`.
+- Refresh tokens rotated on use; server-side revocation list; max 30-day absolute lifetime.
 
 ## Authorization
 
-- **Policy-based**, never `[Authorize(Roles = "Admin")]` strings scattered.
-- Policy keys are `resource:action` (`orders:write`, `customers:read`).
-- Resource-based decisions evaluated **server-side in the handler**, never trusted from the client payload.
-- Multi-tenant: every query filtered by tenant id at the global query filter level. Tenant id from `ICurrentUser`, never from request body.
+- **Policy-based**, never `[Authorize(Roles = "Admin")]` strings scattered across endpoints.
+- Define policies in `Web/Authorization/AuthorizationPolicies.cs` keyed by **resource:action** (`orders:write`, `customers:read`).
+- Resource-based decisions (e.g. "user can read this order if they own it") are evaluated **server-side in the Application handler** via `IAuthorizationService` or an `IAuthorizationRule<TRequest>` in the pipeline — never trusted from the client payload.
+- Multi-tenant: every query filtered by tenant id at the `IApplicationDbContext` global query filter level. Tenant id from `ICurrentUser`, never from request body.
 
 ## Input handling
 
 - Validate everything at the Application boundary via FluentValidation.
-- Length-cap every string (e.g. email max 254, name max 200).
+- Length-cap every string (e.g. email max 254, name max 200). Reject anything larger than the documented max.
 - Reject control characters from text inputs.
-- Parse don't validate: turn an email string into an `EmailAddress` value object.
+- Parse, don't validate-then-pass-string: turn an email string into an `EmailAddress` value object once.
 - IDs as strongly-typed types, not raw `Guid`/`int`.
 
 ## Injection defenses
 
-- SQL: parameterized only. EF does this; Dapper uses `@params`.
-- Command: never `Process.Start` with user input. Allow-list executable + arguments if you must.
-- LDAP, XPath, SMTP: parameterize / escape.
-- Deserialization: never `BinaryFormatter`. JSON only via `System.Text.Json`, `MaxDepth = 32`.
-- HTML: API is JSON; if HTML rendered, use `HtmlEncoder.Default.Encode`.
+- **SQL**: parameterized queries only. EF Core does this; for Dapper, use `@parameters`.
+- **Command**: never pass user input to `Process.Start`. If you must, allow-list the executable and arguments.
+- **LDAP, XPath, SMTP**: same rule — parameterize or escape.
+- **Deserialization**: never `BinaryFormatter`. JSON only via `System.Text.Json` with `MaxDepth = 32` and explicit allowed types.
+- **HTML**: API responses are JSON; if any HTML is rendered, escape via `HtmlEncoder.Default.Encode`.
 
 ## Secrets
 
-- Zero secrets in source or `appsettings.json` (non-Development).
-- `dotnet user-secrets` locally; cloud secret store in deployed envs.
-- Bind to `IOptions<T>` with `ValidateDataAnnotations()` and `ValidateOnStart()`.
-- `git secrets` / `trufflehog` in pre-commit and CI; leaked secret = immediate rotation.
+- **Zero secrets in source**, including `appsettings.json` for non-Development.
+- Local dev: `dotnet user-secrets`. Cloud: Azure Key Vault / AWS Secrets Manager / HashiCorp Vault.
+- Connection strings, API keys, JWT signing keys, encryption keys — all via `IConfiguration` bound to `IOptions<T>` with `ValidateDataAnnotations()` and `ValidateOnStart()`.
+- `git secrets` / `trufflehog` runs in pre-commit and CI. Any leaked secret triggers immediate rotation.
 
 ## Cryptography
 
-- Passwords: Argon2id (preferred) or PBKDF2 ≥600k iterations.
-- Symmetric: AES-256-GCM. Keys from secret store, rotated annually.
-- Random: `RandomNumberGenerator.GetBytes(...)`. Never `Random` for security.
-- TLS: 1.2 minimum, prefer 1.3.
+- Hashing passwords: **Argon2id** (preferred) or **PBKDF2** with ≥600k iterations (SHA-256). Never MD5, SHA-1, plain SHA-256 for passwords.
+- Symmetric encryption: **AES-256-GCM**. Keys from the secret store, rotated annually.
+- Random: `RandomNumberGenerator.GetBytes(...)` only. Never `Random` for security.
+- TLS: 1.2 minimum, prefer 1.3. Disable older protocols at the host level.
 
-## Headers (configured in middleware)
+## HTTPS / transport
 
-- HSTS, CSP, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY` (or CSP `frame-ancestors`).
+- `UseHttpsRedirection()` and `UseHsts()` in production.
+- HSTS max-age ≥ 1 year, `includeSubDomains`, `preload`.
+- HTTP/2 enabled.
+
+## CORS
+
+- Explicit allow-list. **Never** `AllowAnyOrigin()` outside of local development.
+- `AllowCredentials()` only paired with a specific origin.
+
+## Security headers (configured in middleware)
+
+- `Strict-Transport-Security` via HSTS (see above)
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: no-referrer`
+- `X-Frame-Options: DENY` (or CSP `frame-ancestors 'none'`)
+- `Content-Security-Policy: default-src 'none'` for API endpoints
+- `Permissions-Policy` minimized
 
 ## Rate limiting
 
 - Global token bucket per IP.
-- Stricter `/auth/*` (5 req/min/IP).
-- Per-tenant or per-user limits for expensive endpoints.
+- Stricter limits on `/auth/*` (5 req / min / IP).
+- Per-tenant or per-user limits for expensive endpoints, configured via options.
 
-## Logging hygiene
+## Logging — what NOT to log
 
-- Never log: secrets, tokens, full request bodies for sensitive routes, PII.
-- Stack traces: yes in logs, no in user responses.
-- `LogInformation("...{UserId}...", userId)` — structured only.
+- Passwords, tokens (access/refresh/API keys), secrets.
+- Full request bodies on `POST /auth/*`, `/payments/*`.
+- PII without redaction (email, phone, full name, IP — context dependent; align with privacy policy).
+- Stack traces in responses (only in logs).
+- Always structured: `LogInformation("...{UserId}...", userId)`.
 
 ## File uploads (when applicable)
 
-- Hard size limit in Kestrel + middleware.
-- Magic-byte sniffing on the server.
-- Allow-list extensions.
-- Storage outside web root; signed URLs to serve.
+- Hard size limit configured in Kestrel + middleware.
+- MIME-type sniffing on the server, not trust of client `Content-Type`.
+- Allow-list of extensions + magic-byte validation (`MimeDetective` or similar).
+- Storage outside web root; serve via signed URLs.
 
-## Container & deploy
+## Dependencies
 
-- Distroless / Chiseled base image.
-- Non-root user, read-only root FS, tmpfs `/tmp`.
-- No `latest` tag.
-- Trivy / Grype scan in CI; fail on Critical / High.
+- Renovate / Dependabot enabled. PRs reviewed for security advisories.
+- `dotnet list package --vulnerable --include-transitive` runs in CI; build fails on Critical / High.
+- No package from a publisher with fewer than 100k downloads without explicit team agreement in the PR.
+
+## Container & deployment
+
+- Distroless or Chiseled Ubuntu base images. **Never** `latest` tags.
+- Run as non-root user.
+- Read-only root filesystem. Tmpfs for `/tmp`.
+- No secrets baked into images.
+- Image scanning in CI (Trivy or Grype). Build fails on Critical / High CVEs.
+
+## Forbidden
+
+- `[ValidateAntiForgeryToken]` skipped on state-changing endpoints (or, for cookie-auth APIs, no SameSite + CSRF protection).
+- Custom JWT parsers / validators.
+- Logging entire `HttpRequest` or `HttpContext`.
+- `eval`, `Activator.CreateInstance` with user input, `Type.GetType(userInput)`.
+- Disabling SSL certificate validation in `HttpClientHandler` (yes, even "temporarily for debugging").
+- `BinaryFormatter`, dynamic SQL with string concatenation, `Process.Start` with user input.
 
 ## Pre-merge checklist
 
@@ -106,6 +140,7 @@ Apply mentally to any change that touches input, auth, or secrets:
 - [ ] No new dependencies without vetting (publisher reputation, advisories).
 - [ ] No new `Process.Start`, `BinaryFormatter`, dynamic SQL.
 - [ ] Logs reviewed for PII / secrets.
+- [ ] CORS / CSP / HSTS unchanged or tightened, never relaxed.
 
 ## Output when reviewing or implementing
 
@@ -118,5 +153,3 @@ Defenses missing (must fix):
   - <gap> — <fix>
 PII / secret leak risk: <none | list with file:line>
 ```
-
-See [security instructions](../../instructions/security.instructions.md).

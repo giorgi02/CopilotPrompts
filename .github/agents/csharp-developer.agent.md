@@ -1,5 +1,5 @@
 ---
-name: csharp-dev
+name: csharp-developer
 description: Implements C# / .NET code across Domain, Application, Infrastructure, and Web layers. Use for writing handlers, aggregates, EF Core mappings, endpoints, and DI wiring against the repo's Clean Architecture conventions.
 tools: ['search/codebase', 'search/usages', 'edit/files', 'run/tests']
 model: 'Claude Opus 4.7'

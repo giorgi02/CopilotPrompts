@@ -7,7 +7,14 @@ argument-hint: '<file, method, or endpoint to review>'
 
 # Performance review
 
-Apply the rules in [performance instructions](../instructions/performance.instructions.md) and [performance guardrails in anti-patterns](../instructions/anti-patterns.instructions.md). Focus on **measured, plausible** wins. Don't chase micro-optimizations that don't move the SLO needle.
+Apply the [performance guardrails in anti-patterns](../instructions/anti-patterns.instructions.md) (Persistence and Async sections especially) plus the SLO targets and scan rules below. Focus on **measured, plausible** wins. Don't chase micro-optimizations that don't move the SLO needle.
+
+## SLO targets
+
+- API p95 < 300ms (read), < 800ms (write).
+- < 50 allocations per request on hot paths.
+- GC pause p99 < 50ms.
+- DB round-trips per request: 1 ideal, 2–3 acceptable, > 5 needs justification.
 
 ## Scan in this order
 
