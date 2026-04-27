@@ -20,9 +20,6 @@ Everything Copilot consumes lives under `.github/`. There is intentionally no se
 | Agent skills | [.github/skills/](.github/skills/) | Auto-discovered by description, or `/<skill-name>` | Procedural skill packs the agent loads when relevant. |
 | Custom agents | [.github/agents/](.github/agents/) | Selected per chat | Specialized personas (architect, reviewer, refactorer). |
 | Cross-tool agent file | [AGENTS.md](AGENTS.md) | Always (Copilot, Claude, Codex, etc.) | Provider-neutral north star for any AI agent. |
-| PR template | [.github/PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md) | GitHub UI | Pre-merge checklist tied to the architecture, security, and perf rules. |
-| CODEOWNERS | [.github/CODEOWNERS](.github/CODEOWNERS) | GitHub | Routes review requests by area (architects, security, db). |
-| Dependency updates | [.github/dependabot.yml](.github/dependabot.yml) | GitHub | Weekly grouped NuGet + Docker update PRs. |
 
 ---
 
@@ -52,16 +49,12 @@ Each choice is justified in the relevant file under [.github/instructions/](.git
 3. When you write code, Copilot will automatically load the relevant `.instructions.md` based on the file you are in.
 
 ### When you start a non-trivial task
-- Need a new feature? Run [/feature-slice](.github/prompts/feature-slice.prompt.md).
 - Need a new endpoint? Run [/api-generation](.github/prompts/api-generation.prompt.md).
-- Need a CQRS handler? Run [/cqrs-handler](.github/prompts/cqrs-handler.prompt.md).
-- Designing a domain model? Run [/domain-model](.github/prompts/domain-model.prompt.md).
-- Generating tests? Run [/testing](.github/prompts/testing.prompt.md).
-- Refactoring? Run [/refactoring](.github/prompts/refactoring.prompt.md).
+- Generating tests? Run [/testing](.github/prompts/testing.prompt.md) (alias: [/generate-tests](.github/prompts/generate-tests.prompt.md)).
+- Refactoring? Run [/refactoring](.github/prompts/refactoring.prompt.md) (alias: [/refactor](.github/prompts/refactor.prompt.md)).
 - Investigating a bug? Run [/bug-investigation](.github/prompts/bug-investigation.prompt.md).
 - Planning a schema change? Run [/migration](.github/prompts/migration.prompt.md).
-- Reviewing a PR? Run [/pr-review](.github/prompts/pr-review.prompt.md), or scoped: [/code-review](.github/prompts/code-review.prompt.md), [/security-review](.github/prompts/security-review.prompt.md), [/performance-review](.github/prompts/performance-review.prompt.md), [/architecture-review](.github/prompts/architecture-review.prompt.md).
-- SEV1/SEV2 in production? Run [/incident-response](.github/prompts/incident-response.prompt.md).
+- Reviewing a PR? Run a scoped review: [/code-review](.github/prompts/code-review.prompt.md), [/security-review](.github/prompts/security-review.prompt.md), [/performance-review](.github/prompts/performance-review.prompt.md), [/architecture-review](.github/prompts/architecture-review.prompt.md).
 
 ### When you want a specialist
 Switch the chat to one of the custom agents in [.github/agents/](.github/agents/):
@@ -87,7 +80,7 @@ If two repo-scoped rules conflict, the **more specific** rule wins. If still amb
 
 ## Contributing to the OS itself
 
-Changes to anything under `.github/` are reviewed against the rules in [.github/instructions/anti-patterns.instructions.md](.github/instructions/anti-patterns.instructions.md) and the [PR template](.github/PULL_REQUEST_TEMPLATE.md). New conventions belong in the relevant `.instructions.md` file with a brief rationale in the PR description.
+Changes to anything under `.github/` are reviewed against the rules in [.github/instructions/anti-patterns.instructions.md](.github/instructions/anti-patterns.instructions.md). New conventions belong in the relevant `.instructions.md` file with a brief rationale in the PR description.
 
 ---
 

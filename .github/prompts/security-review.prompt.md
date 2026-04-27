@@ -7,7 +7,7 @@ argument-hint: '<file, endpoint, or PR>'
 
 # Security review
 
-Apply [security instructions](../instructions/security.instructions.md) and the security checks in the [PR template](../PULL_REQUEST_TEMPLATE.md). Map every finding to an OWASP Top 10 category where possible.
+Apply [security instructions](../instructions/security.instructions.md). Map every finding to an OWASP Top 10 category where possible.
 
 ## Scan checklist
 

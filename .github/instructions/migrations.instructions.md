@@ -62,7 +62,7 @@ Single-step drops are allowed only when the column has been unused for a full re
 
 ## Schema review
 
-- Every PR with a migration tags `@db-reviewer` (CODEOWNERS).
+- Every PR with a migration must be reviewed by a database owner before merge.
 - Review against [anti-patterns](./anti-patterns.instructions.md) database section.
 
 ## Application at deploy time

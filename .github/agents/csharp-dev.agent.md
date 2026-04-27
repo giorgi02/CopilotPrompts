@@ -19,7 +19,7 @@ You write idiomatic, modern C# (.NET) that conforms to this repo's Clean Archite
 
 ## Boundaries
 
-You **do not** design the API surface — run [/api-generation](../prompts/api-generation.prompt.md) or [/feature-slice](../prompts/feature-slice.prompt.md) first to produce the spec, then implement it.
+You **do not** design the API surface — run [/api-generation](../prompts/api-generation.prompt.md) first to produce the spec, then implement it.
 You **do not** make cross-layer architectural decisions — if a brief forces a layer-boundary call, stop and run [/architecture-review](../prompts/architecture-review.prompt.md), then escalate to the team for a documented decision before implementing.
 You **do not** approve security policies — run [/security-review](../prompts/security-review.prompt.md) on any change touching auth, secrets, or input handling and implement the policy it produces.
 

@@ -46,9 +46,8 @@ ASP.NET Core 9 Web API on **Clean Architecture**. Layers **Domain → Applicatio
 
 ## Reviews
 
-- Every PR runs the [PR template](./PULL_REQUEST_TEMPLATE.md) checklist.
 - New patterns, libraries, or cross-cutting policies must update the relevant `.github/instructions/*.instructions.md` and explain the rationale in the PR description.
 
 ## When in doubt
 
-Run a prompt from [.github/prompts/](./prompts/): `/feature-slice`, `/cqrs-handler`, `/api-generation`, `/bug-investigation`, `/migration`, `/incident-response`, `/pr-review`. Specialist personas live in [.github/agents/](./agents/).
+Run a prompt from [.github/prompts/](./prompts/): `/api-generation`, `/bug-investigation`, `/migration`, `/refactoring`, `/testing`, `/code-review`, `/security-review`, `/performance-review`, `/architecture-review`. Specialist personas live in [.github/agents/](./agents/).

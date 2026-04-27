@@ -52,7 +52,7 @@ You are working in a **production ASP.NET Core 9 Web API** built on **Clean Arch
 
 Ask yourself, in this order:
 1. Is there an existing pattern in this codebase that solves this? → Use it.
-2. Is there a reusable prompt in `.github/prompts/` (e.g. `/feature-slice`, `/bug-investigation`, `/migration`, `/incident-response`)? → Run it.
+2. Is there a reusable prompt in `.github/prompts/` (e.g. `/api-generation`, `/bug-investigation`, `/migration`, `/refactoring`)? → Run it.
 3. Is there a rule in `.github/instructions/anti-patterns.instructions.md` I might be violating? → Check.
 4. Am I about to introduce a new abstraction for one caller? → Don't. Three call sites unlocks an abstraction.
 5. Am I about to add a NuGet package? → It needs a justification in the PR description and, if it introduces a pattern, a rule in the relevant `.github/instructions/*.instructions.md`.
@@ -76,7 +76,7 @@ Ask yourself, in this order:
 |---|---|
 | Repo-wide constitution | [.github/copilot-instructions.md](.github/copilot-instructions.md) |
 | Layered rules (auto-applied by file path) | [.github/instructions/](.github/instructions/) |
-| Reusable prompts (`/feature-slice`, `/migration`, `/bug-investigation`, `/incident-response`, …) | [.github/prompts/](.github/prompts/) |
+| Reusable prompts (`/api-generation`, `/migration`, `/bug-investigation`, `/refactoring`, …) | [.github/prompts/](.github/prompts/) |
 | Specialist personas (architect, reviewer, refactorer, …) | [.github/agents/](.github/agents/) |
 | Auto-discoverable skill packs | [.github/skills/](.github/skills/) |
 | Anti-patterns & guardrails (named smells, build/PR gates) | [.github/instructions/anti-patterns.instructions.md](.github/instructions/anti-patterns.instructions.md) |
@@ -91,6 +91,5 @@ A change is done when:
 - The relevant `.instructions.md` files were respected (Copilot loads them automatically based on file paths).
 - Tests are added/updated; the coverage gate still passes.
 - The PR description references which prompt was followed.
-- The [PR template](.github/PULL_REQUEST_TEMPLATE.md) checklist is satisfied.
 
 If you are about to ship something that violates a rule, stop and either fix the change or update the rule (with the rationale in the PR description) — do not silently break it.

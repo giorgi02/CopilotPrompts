@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo actually is
 
-This repo contains **no application source code**. There is no `src/`, no `tests/`, no `.csproj`. Do not look for build, lint, or test commands — there are none to run. [global.json](global.json) pins the .NET 9 SDK for a future app, but the artifacts here are pure markdown.
+This repo contains **no application source code**. There is no `src/`, no `tests/`, no `.csproj`, no `global.json`. Do not look for build, lint, or test commands — there are none to run. The artifacts here are pure markdown.
 
 What this repo *is*: a context-engineering toolkit — the instructions, prompts, skills, and agents that condition GitHub Copilot, Claude Code, Codex, Cursor, and other AI agents to behave like a senior engineer on an opinionated **ASP.NET Core 9 / Clean Architecture** stack. When you edit files here, you are editing the rules that govern *another* codebase's AI behavior, not the codebase itself.
 
@@ -52,7 +52,7 @@ When the user asks for guidance on the target stack (handlers, endpoints, EF map
 
 - **Frontmatter is load-bearing.** Without correct `applyTo` / `description` / `name`, the file may never be loaded. Match the shape used by sibling files in the same directory.
 - **Cross-references use markdown links** so they render in chat and IDE. Keep them relative.
-- **Internal links must resolve.** [.github/markdown-link-check.json](.github/markdown-link-check.json) is the link-checker config — adding/renaming files means updating every reference.
+- **Internal links must resolve.** Adding or renaming a file means updating every reference to it across `README.md`, `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, and any sibling instructions/prompts/skills/agents that link to it.
 - **The 4,000-char budget on [.github/copilot-instructions.md](.github/copilot-instructions.md)** is real (Copilot Code Review truncation). Push detail down into `.github/instructions/*.instructions.md` rather than expanding the constitution.
 - **Don't duplicate.** A rule belongs in exactly one place; everywhere else cross-links to it. The anti-patterns file ([.github/instructions/anti-patterns.instructions.md](.github/instructions/anti-patterns.instructions.md)) is the canonical home for "don't do X".
 - **Agent files use `*.agent.md`** (the `.agent.md` suffix is the current convention — see [.github/agents/csharp-dev.agent.md](.github/agents/csharp-dev.agent.md)).
@@ -60,6 +60,6 @@ When the user asks for guidance on the target stack (handlers, endpoints, EF map
 ## Useful slash-prompts (run these instead of reinventing)
 
 The prompts in [.github/prompts/](.github/prompts/) are how target-codebase work gets done:
-`/feature-slice`, `/api-generation`, `/cqrs-handler`, `/domain-model`, `/testing`, `/refactoring`, `/bug-investigation`, `/migration`, `/incident-response`, `/pr-review`, `/code-review`, `/security-review`, `/performance-review`, `/architecture-review`, `/explain`.
+`/api-generation`, `/architecture-review`, `/bug-investigation`, `/code-review`, `/migration`, `/performance-review`, `/refactoring` (alias `/refactor`), `/security-review`, `/testing` (alias `/generate-tests`).
 
-Specialist personas live in [.github/agents/](.github/agents/) and are selected per chat session.
+Specialist personas live in [.github/agents/](.github/agents/) and are selected per chat session — currently only [`csharp-dev`](.github/agents/csharp-dev.agent.md).

@@ -93,5 +93,3 @@ The system targets:
 - `string.Format` / interpolation for log messages (breaks structured logging and allocates).
 - Multiple `await` calls on independent operations sequentially when `Task.WhenAll` is available.
 - Converting `IQueryable` to `IEnumerable` mid-pipeline (silently drops to client-side eval).
-
-See [.github/PULL_REQUEST_TEMPLATE.md](../PULL_REQUEST_TEMPLATE.md) for the per-PR review checklist.

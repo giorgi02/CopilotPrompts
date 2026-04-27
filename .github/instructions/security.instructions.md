@@ -109,5 +109,3 @@ This file is **always** active. Security is not a feature; it is a constraint on
 - Logging entire `HttpRequest` or `HttpContext`.
 - `eval`, `Activator.CreateInstance` with user input, `Type.GetType(userInput)`.
 - Disabling SSL certificate validation in `HttpClientHandler` (yes, even "temporarily for debugging").
-
-See [.github/PULL_REQUEST_TEMPLATE.md](../PULL_REQUEST_TEMPLATE.md) for the per-PR review checklist.
