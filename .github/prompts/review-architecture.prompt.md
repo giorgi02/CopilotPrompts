@@ -7,7 +7,7 @@ argument-hint: '<change, folder, or proposal to evaluate>'
 
 # Architecture review
 
-You are reviewing a change for **structural integrity**, not for line-level bugs (use `/code-review` for that).
+You are reviewing a change for **structural integrity**, not for line-level bugs (use `/review-code` for that).
 
 ## What you are checking
 

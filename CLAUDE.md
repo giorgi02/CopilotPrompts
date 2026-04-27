@@ -60,6 +60,6 @@ When the user asks for guidance on the target stack (handlers, endpoints, EF map
 ## Useful slash-prompts (run these instead of reinventing)
 
 The prompts in [.github/prompts/](.github/prompts/) are how target-codebase work gets done:
-`/api-generation`, `/architecture-review`, `/bug-investigation`, `/code-review`, `/migration`, `/performance-review`, `/refactoring` (alias `/refactor`), `/security-review`, `/testing` (alias `/generate-tests`).
+`/api-generation`, `/review-architecture`, `/bug-investigation`, `/review-code`, `/review-performance`, `/refactor`, `/review-security`, `/testing`.
 
 Specialist personas live in [.github/agents/](.github/agents/) and are selected per chat session — currently only [`csharp-dev`](.github/agents/csharp-dev.agent.md).

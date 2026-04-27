@@ -50,4 +50,4 @@ ASP.NET Core 9 Web API on **Clean Architecture**. Layers **Domain → Applicatio
 
 ## When in doubt
 
-Run a prompt from [.github/prompts/](./prompts/): `/api-generation`, `/bug-investigation`, `/migration`, `/refactoring`, `/testing`, `/code-review`, `/security-review`, `/performance-review`, `/architecture-review`. Specialist personas live in [.github/agents/](./agents/).
+Run a prompt from [.github/prompts/](./prompts/): `/api-generation`, `/bug-investigation`, `/refactor`, `/testing`, `/review-code`, `/review-security`, `/review-performance`, `/review-architecture`. Specialist personas live in [.github/agents/](./agents/).

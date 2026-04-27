@@ -50,17 +50,16 @@ Each choice is justified in the relevant file under [.github/instructions/](.git
 
 ### When you start a non-trivial task
 - Need a new endpoint? Run [/api-generation](.github/prompts/api-generation.prompt.md).
-- Generating tests? Run [/testing](.github/prompts/testing.prompt.md) (alias: [/generate-tests](.github/prompts/generate-tests.prompt.md)).
-- Refactoring? Run [/refactoring](.github/prompts/refactoring.prompt.md) (alias: [/refactor](.github/prompts/refactor.prompt.md)).
+- Generating tests? Run [/testing](.github/prompts/testing.prompt.md).
+- Refactoring? Run [/refactor](.github/prompts/refactor.prompt.md).
 - Investigating a bug? Run [/bug-investigation](.github/prompts/bug-investigation.prompt.md).
-- Planning a schema change? Run [/migration](.github/prompts/migration.prompt.md).
-- Reviewing a PR? Run a scoped review: [/code-review](.github/prompts/code-review.prompt.md), [/security-review](.github/prompts/security-review.prompt.md), [/performance-review](.github/prompts/performance-review.prompt.md), [/architecture-review](.github/prompts/architecture-review.prompt.md).
+- Reviewing a PR? Run a scoped review: [/review-code](.github/prompts/review-code.prompt.md), [/review-security](.github/prompts/review-security.prompt.md), [/review-performance](.github/prompts/review-performance.prompt.md), [/review-architecture](.github/prompts/review-architecture.prompt.md).
 
 ### When you want a specialist
 Switch the chat to one of the custom agents in [.github/agents/](.github/agents/):
 - [`csharp-dev`](.github/agents/csharp-dev.agent.md) — implements C# / .NET code across all four layers under the project conventions.
 
-Additional personas (architect, reviewer, security, performance, etc.) are planned — for now, use the relevant prompt above (e.g. `/architecture-review`, `/security-review`, `/performance-review`) which encodes the same expectations.
+Additional personas (architect, reviewer, security, performance, etc.) are planned — for now, use the relevant prompt above (e.g. `/review-architecture`, `/review-security`, `/review-performance`) which encodes the same expectations.
 
 ---
 
